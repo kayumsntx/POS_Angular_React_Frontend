@@ -1,0 +1,56 @@
+<div class="row">
+  <div class="col-md-4 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">{{ isEditMode() ? 'Edit Category' : 'Add Category' }}</h5>
+      </div>
+      <div class="card-body">
+        @if (message()) {
+          <div class="alert alert-danger">{{ message() }}</div>
+        }
+        <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" formControlName="name" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea formControlName="description" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-outline-success">
+              {{ isEditMode() ? 'Update' : 'Save' }}
+            </button>
+            <button type="button" class="btn btn-outline-danger" (click)="resetForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8 mb-4">
+    <div class="card">
+      <div class="card-header"><h4 class="mb-0">Category List</h4></div>
+      <div class="card-body p-0">
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Description</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @for (c of categories(); track c.categoryId) {
+              <tr>
+                <td>{{ c.categoryId }}</td>
+                <td>{{ c.name }}</td>
+                <td>{{ c.description }}</td>
+                <td>
+                  <button (click)="editCategory(c)" type="button" class="btn btn-outline-primary btn-sm">Edit</button>
+                  <button (click)="deleteCategory(c.categoryId)" type="button" class="btn btn-outline-danger btn-sm">Delete</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

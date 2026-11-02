@@ -1,0 +1,92 @@
+@if (message()) {
+  <div class="alert alert-danger">{{ message() }}</div>
+}
+
+@if (selectedOrder(); as o) {
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between">
+      <h5 class="mb-0">Order #{{ o.orderId }} Details</h5>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeDetails()">Close</button>
+    </div>
+    <div class="card-body">
+      @if (o.deliveryAddress) {
+        <p class="mb-2">
+          <strong>Deliver to:</strong> {{ o.deliveryAddress.recipientName }},
+          {{ o.deliveryAddress.phone }}, {{ o.deliveryAddress.address }}
+        </p>
+      }
+      <table class="table table-sm table-bordered">
+        <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr></thead>
+        <tbody>
+          @for (it of o.items; track it.orderItemId) {
+            <tr>
+              <td>{{ it.productName }}</td>
+              <td>{{ it.quantity }}</td>
+              <td>{{ it.unitPrice | number: '1.2-2' }}</td>
+              <td>{{ it.subtotal | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <div class="text-end">
+        <div>Total: {{ o.totalAmount | number: '1.2-2' }}</div>
+        <div>Discount: {{ o.discountAmount | number: '1.2-2' }}</div>
+        <div>Shipping: {{ o.shippingAmount | number: '1.2-2' }}</div>
+        <div><strong>Payable: {{ o.payableAmount | number: '1.2-2' }}</strong></div>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">Orders</h4>
+    <select class="form-select form-select-sm" style="width: 180px" (change)="onFilterChange($event)">
+      <option value="">All</option>
+      <option value="Pending">Pending</option>
+      <option value="Approved">Approved</option>
+      <option value="Cancelled">Cancelled</option>
+      <option value="Paid">Paid</option>
+      <option value="Unpaid">Unpaid</option>
+      <option value="Online">Online</option>
+    </select>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-bordered mb-0">
+      <thead>
+        <tr><th>#</th><th>Date</th><th>Type</th><th>Items</th><th>Payable</th><th>Payment</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        @for (o of orders(); track o.orderId) {
+          <tr>
+            <td>{{ o.orderId }}</td>
+            <td>{{ o.orderDate | date: 'yyyy-MM-dd HH:mm' }}</td>
+            <td>{{ o.orderType }}</td>
+            <td>
+              <ul class="list-unstyled mb-0 small">
+                @for (it of o.items; track it.orderItemId) {
+                  <li>{{ it.productName }} x {{ it.quantity }}</li>
+                }
+              </ul>
+            </td>
+            <td>{{ o.payableAmount | number: '1.2-2' }}</td>
+            <td>
+              {{ o.paymentMethod }}
+              <span class="badge" [class]="'badge ' + payClass(o.paymentStatus)">{{ o.paymentStatus }}</span>
+            </td>
+            <td><span [class]="'badge ' + statusClass(o.status)">{{ o.status }}</span></td>
+            <td>
+              <button (click)="viewOrder(o.orderId)" type="button" class="btn btn-outline-primary btn-sm">Details</button>
+              @if (o.status === 'Pending' && o.orderType === 'Online' && auth.hasRole(['Admin', 'POSOperator', 'Salesman'])) {
+                <button (click)="approve(o.orderId)" type="button" class="btn btn-outline-success btn-sm">Approve</button>
+              }
+              @if (o.status === 'Pending' && auth.hasRole(['Admin'])) {
+                <button (click)="cancel(o.orderId)" type="button" class="btn btn-outline-danger btn-sm">Cancel</button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

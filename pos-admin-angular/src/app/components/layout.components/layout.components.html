@@ -1,0 +1,27 @@
+<nav class="navbar navbar-expand navbar-dark bg-dark px-3">
+  <span class="navbar-brand">POS Admin</span>
+  <ul class="navbar-nav me-auto">
+    @if (auth.hasRole(['Admin', 'POSOperator'])) {
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/categories" routerLinkActive="active">Categories</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/products" routerLinkActive="active">Products</a>
+      </li>
+    }
+    @if (auth.hasRole(['Admin', 'POSOperator', 'Cashier'])) {
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/inventory" routerLinkActive="active">Inventory</a>
+      </li>
+    }
+    <li class="nav-item">
+      <a class="nav-link" routerLink="/orders" routerLinkActive="active">Orders</a>
+    </li>
+  </ul>
+  <span class="text-white me-3">{{ auth.userName }} ({{ auth.role }})</span>
+  <button class="btn btn-outline-light btn-sm" (click)="auth.logout()">Logout</button>
+</nav>
+
+<div class="container my-4">
+  <router-outlet />
+</div>

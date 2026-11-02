@@ -1,0 +1,71 @@
+<div class="row">
+  @if (auth.hasRole(['Admin', 'POSOperator'])) {
+    <div class="col-md-4 mb-4">
+      <div class="card">
+        <div class="card-header"><h5 class="mb-0">Add Stock Record</h5></div>
+        <div class="card-body">
+          @if (message()) {
+            <div class="alert alert-danger">{{ message() }}</div>
+          }
+          <form [formGroup]="stockForm" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label class="form-label">Product</label>
+              <select formControlName="productId" class="form-select">
+                <option [ngValue]="0">Select Product</option>
+                @for (p of products(); track p.productId) {
+                  <option [ngValue]="p.productId">{{ p.productName }}</option>
+                }
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Quantity</label>
+              <input type="number" formControlName="quantity" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-outline-success">Save</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="col mb-4">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">{{ showLowStock() ? 'Low Stock' : 'Inventory' }}</h4>
+        <div class="d-flex gap-2 align-items-center">
+          @if (showLowStock()) {
+            <input type="number" class="form-control form-control-sm" style="width: 80px"
+                   [value]="threshold()" (change)="onThresholdChange($event)" />
+          }
+          <button class="btn btn-sm btn-outline-warning" (click)="toggleLowStock()">
+            {{ showLowStock() ? 'Show All' : 'Low Stock' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr><th>Product</th><th>Barcode</th><th>Category</th><th>Qty</th><th>Updated</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @for (i of inventories(); track i.inventoryId) {
+              <tr [class.table-danger]="i.quantity <= threshold()">
+                <td>{{ i.productName }}</td>
+                <td>{{ i.barcode }}</td>
+                <td>{{ i.categoryName }}</td>
+                <td><strong>{{ i.quantity }}</strong></td>
+                <td>{{ i.updatedAt | date: 'yyyy-MM-dd HH:mm' }}</td>
+                <td>
+                  <button (click)="adjust(i)" type="button" class="btn btn-outline-primary btn-sm">Adjust</button>
+                  @if (auth.hasRole(['Admin'])) {
+                    <button (click)="deleteInventory(i.inventoryId)" type="button" class="btn btn-outline-danger btn-sm">Delete</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
