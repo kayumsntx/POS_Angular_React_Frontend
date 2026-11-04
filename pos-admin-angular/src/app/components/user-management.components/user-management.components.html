@@ -1,0 +1,67 @@
+<div class="card table-card">
+  <div class="card-head">
+    <div>
+      <div class="card-title">User & Role Management</div>
+      <div class="card-sub">Manage staff accounts and role-based permissions</div>
+    </div>
+    <button class="secondary-btn" (click)="loadUsers()">↻ Refresh</button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger mx-3 my-2">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="p-4 text-center text-muted">
+      <p class="m-0">Loading users...</p>
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Phone Number</th>
+            <th>Assigned Roles</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.phoneNumber) {
+            <tr>
+              <td>
+                <strong>{{ user.userName }}</strong>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.phoneNumber }}</td>
+              <td>
+                <div class="d-flex gap-3 align-items-center">
+                  @for (role of availableRoles; track role) {
+                    <label class="d-flex align-items-center gap-1 role-checkbox-label">
+                      <input
+                        type="checkbox"
+                        [id]="user.phoneNumber + '-' + role"
+                        [checked]="user.roles.includes(role)"
+                        (change)="onRoleChange(user.phoneNumber, role, $event)"
+                      />
+                      <span>{{ role }}</span>
+                    </label>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr>
+              <td colspan="4" class="text-center py-4 text-muted">
+                No users found.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

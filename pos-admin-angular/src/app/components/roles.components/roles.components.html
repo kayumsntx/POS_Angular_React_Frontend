@@ -1,0 +1,58 @@
+<div class="row">
+  <div class="col-md-4 mb-4">
+    <div class="card">
+      <div class="card-header"><h5 class="mb-0">Create Role</h5></div>
+      <div class="card-body">
+        @if (message()) {
+          <div class="alert alert-danger">{{ message() }}</div>
+        }
+        @if (success()) {
+          <div class="alert alert-success">{{ success() }}</div>
+        }
+        <form [formGroup]="roleForm" (ngSubmit)="onSubmit()">
+          <div class="mb-3">
+            <label class="form-label">Role Name</label>
+            <input type="text" formControlName="roleName" class="form-control" />
+            @if (roleForm.controls.roleName.touched && roleForm.controls.roleName.invalid) {
+              <small class="text-danger">Role name is required (min 2 characters)</small>
+            }
+          </div>
+          <button type="submit" class="btn btn-outline-success">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8 mb-4">
+    <div class="card">
+      <div class="card-header"><h4 class="mb-0">Role List</h4></div>
+      <div class="card-body p-0">
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr><th>#</th><th>Role Name</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @for (r of roles(); track r.id) {
+              <tr>
+                <td>{{ r.id }}</td>
+                <td>
+                  {{ r.roleName }}
+                  @if (isBuiltIn(r.roleName)) {
+                    <span class="badge bg-secondary ms-1">built-in</span>
+                  }
+                </td>
+                <td>
+                  @if (!isBuiltIn(r.roleName)) {
+                    <button (click)="deleteRole(r)" type="button" class="btn btn-outline-danger btn-sm">
+                      Delete
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

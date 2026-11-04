@@ -1,23 +1,35 @@
-<div class="container" style="max-width: 420px; margin-top: 80px">
-  <div class="card">
-    <div class="card-header"><h5 class="mb-0">POS Admin Login</h5></div>
-    <div class="card-body">
-      @if (error()) {
-        <div class="alert alert-danger">{{ error() }}</div>
-      }
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="mb-3">
-          <label class="form-label">Phone Number</label>
-          <input type="text" formControlName="phoneNumber" class="form-control" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Password</label>
-          <input type="password" formControlName="password" class="form-control" />
-        </div>
-        <button type="submit" class="btn btn-success w-100" [disabled]="loading()">
-          {{ loading() ? 'Please wait...' : 'Login' }}
-        </button>
-      </form>
+﻿<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-icon">💻</div>
+      <h2>TechPoint <span>POS</span></h2>
+      <p>Sign in to your administration dashboard</p>
     </div>
+
+    @if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label class="form-label">Phone Number</label>
+        <input type="text" formControlName="phoneNumber" class="form-control" placeholder="e.g. 01700000000" />
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Password</label>
+        <input type="password" formControlName="password" class="form-control" placeholder="••••••••" />
+      </div>
+
+      <button type="submit" class="primary-btn w-100 justify-content-center py-2" [disabled]="loading()">
+        {{ loading() ? 'Signing in...' : 'Sign In to Dashboard' }}
+      </button>
+      
+      <!-- Link to Registration -->
+      <div class="text-center mt-4">
+        <span class="text-muted">Don't have an account? </span>
+        <a routerLink="/register" class="link-btn">Register here</a>
+      </div>
+    </form>
   </div>
 </div>

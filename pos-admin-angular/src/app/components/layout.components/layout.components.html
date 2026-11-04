@@ -1,27 +1,126 @@
-<nav class="navbar navbar-expand navbar-dark bg-dark px-3">
-  <span class="navbar-brand">POS Admin</span>
-  <ul class="navbar-nav me-auto">
-    @if (auth.hasRole(['Admin', 'POSOperator'])) {
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/categories" routerLinkActive="active">Categories</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/products" routerLinkActive="active">Products</a>
-      </li>
-    }
-    @if (auth.hasRole(['Admin', 'POSOperator', 'Cashier'])) {
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/inventory" routerLinkActive="active">Inventory</a>
-      </li>
-    }
-    <li class="nav-item">
-      <a class="nav-link" routerLink="/orders" routerLinkActive="active">Orders</a>
-    </li>
-  </ul>
-  <span class="text-white me-3">{{ auth.userName }} ({{ auth.role }})</span>
-  <button class="btn btn-outline-light btn-sm" (click)="auth.logout()">Logout</button>
-</nav>
+<div class="app-layout">
+  <!-- Mobile Backdrop -->
+  @if (sidebarOpen) {
+    <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
+  }
 
-<div class="container my-4">
-  <router-outlet />
+  <!-- SIDEBAR -->
+  <aside class="sidebar" [class.open]="sidebarOpen">
+    <div class="brand">
+      <div class="brand-icon">💻</div>
+      <div>
+        <div class="brand-name">TechPoint <span>POS</span></div>
+        <div class="brand-sub">RETAIL MANAGEMENT</div>
+      </div>
+    </div>
+
+    <div class="nav-label">WORKSPACE</div>
+    <nav class="nav">
+      <a routerLink="/dashboard" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="ico">📊</span>
+        <span>Dashboard</span>
+      </a>
+
+      <!-- Point of Sale (POS) -->
+      @if (auth.hasRole(['Admin', 'POSOperator', 'Cashier', 'Salesman'])) {
+        <a routerLink="/pos" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">🖥️</span>
+          <span>Point of Sale</span>
+          <span class="badge-new">New</span>
+        </a>
+      }
+
+      @if (auth.hasRole(['Admin', 'POSOperator'])) {
+        <a routerLink="/categories" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">📁</span>
+          <span>Categories</span>
+        </a>
+
+        <a routerLink="/products" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">📦</span>
+          <span>Products Catalog</span>
+        </a>
+      }
+
+      @if (auth.hasRole(['Admin', 'POSOperator', 'Cashier'])) {
+        <a routerLink="/inventory" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">📋</span>
+          <span>Inventory & Stock</span>
+        </a>
+      }
+
+      <a routerLink="/orders" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="ico">🛒</span>
+        <span>Orders & Invoices</span>
+      </a>
+    </nav>
+
+    @if (auth.hasRole(['Admin'])) {
+      <div class="nav-label">FINANCE & SYSTEM</div>
+      <nav class="nav">
+        <a routerLink="/roles" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">🛡️</span>
+          <span>Roles & Permissions</span>
+        </a>
+
+        <a routerLink="/user-management" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">👥</span>
+          <span>User Management</span>
+        </a>
+      </nav>
+    }
+
+    <div class="sidebar-bottom">
+      <div class="session-badge">
+        <div class="dot-status active"></div>
+        <div>
+          <strong>System Live</strong>
+          <small>Role: {{ auth.role || 'User' }}</small>
+        </div>
+      </div>
+
+      <div class="profile">
+        <div class="avatar">{{ getUserInitials() }}</div>
+        <div class="profile-info">
+          <strong [title]="auth.userName">{{ auth.userName || 'Admin' }}</strong>
+          <small>{{ auth.role || 'Staff' }}</small>
+        </div>
+        <button class="icon-btn-ghost" title="Logout" (click)="auth.logout()">🚪</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <main class="main">
+    <header class="topbar">
+      <div class="heading-wrap">
+        <button class="icon-btn mobile-menu-btn" (click)="toggleSidebar()" aria-label="Toggle Navigation">☰</button>
+        <div class="heading">
+          <h1>POS Administration</h1>
+          <p>Enterprise Shop & Retail Management</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input placeholder="Quick search..." />
+        </div>
+
+        <div class="api-status-pill">
+          <span class="pulse-dot"></span>
+          <span>Online</span>
+        </div>
+
+        <button class="primary-btn" routerLink="/pos">
+          <span>+</span> New Sale
+        </button>
+      </div>
+    </header>
+
+    <!-- VIEW CONTAINER -->
+    <div class="view-container">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
 </div>

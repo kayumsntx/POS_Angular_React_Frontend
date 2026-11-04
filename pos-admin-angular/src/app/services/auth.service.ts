@@ -4,10 +4,18 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { LoginResponse } from '../models/auth';
 
+export interface RegistrationPayload {
+  email: string;
+  phoneNumber: string;
+  password: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  
+  // Using your original API URL
   private apiUrl = 'http://localhost:5109/api/Account';
 
   login(phoneNumber: string, password: string): Observable<LoginResponse> {
@@ -23,8 +31,8 @@ export class AuthService {
       );
   }
 
-  register(email: string, phoneNumber: string, password: string): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}/register`, { email, phoneNumber, password });
+  register(data: RegistrationPayload): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/register`, data);
   }
 
   logout(): void {
@@ -35,9 +43,11 @@ export class AuthService {
   get token(): string | null {
     return localStorage.getItem('token');
   }
+  
   get role(): string {
     return localStorage.getItem('role') ?? '';
   }
+  
   get userName(): string {
     return localStorage.getItem('userName') ?? '';
   }

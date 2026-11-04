@@ -1,0 +1,271 @@
+﻿<!-- VISIBLE POS INTERFACE (HIDDEN WHEN PRINTING) -->
+<div class="pos-container d-print-none">
+  <!-- POS TOPBAR -->
+  <header class="pos-header">
+    
+  </header>
+
+  <!-- NOTICES -->
+  @if (errorMessage) {
+    <div class="alert alert-danger py-2 mb-3">{{ errorMessage }}</div>
+  }
+  @if (successNotice) {
+    <div class="alert alert-success py-2 mb-3">{{ successNotice }}</div>
+  }
+
+  <!-- MAIN WORKSPACE GRID -->
+  <div class="pos-grid">
+    <!-- LEFT: CATALOG & BARCODE SCANNER -->
+    <div class="pos-catalog-panel">
+      <!-- Barcode scan -->
+      <div class="barcode-scan-bar">
+        <div class="scan-input-wrapper">
+          <span class="scan-icon">🔍</span>
+          <input
+            [(ngModel)]="barcodeInput"
+            (keydown.enter)="onBarcodeScan()"
+            placeholder="Scan barcode or type SKU / model..."
+            autofocus
+          />
+        </div>
+        <button class="scan-add-btn" (click)="onBarcodeScan()">Add</button>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="category-pills-bar">
+        <button
+          class="cat-pill"
+          [class.active]="selectedCategoryId === null"
+          (click)="selectCategory(null)"
+        >
+          All Products
+        </button>
+
+        @for (cat of categories; track cat.categoryId) {
+          <button
+            class="cat-pill"
+            [class.active]="selectedCategoryId === cat.categoryId"
+            (click)="selectCategory(cat.categoryId)"
+          >
+            {{ cat.name }}
+          </button>
+        }
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid">
+        @for (prod of filteredProducts; track prod.productId) {
+          <div
+            class="product-card"
+            [class.out-of-stock]="getStock(prod.productId) <= 0"
+            (click)="addToTicket(prod)"
+          >
+            <div class="prod-card-top">
+              <div class="prod-thumb">
+                <div class="prod-icon-box">📦</div>
+              </div>
+              <span class="badge-serialized">SERIALIZED</span>
+            </div>
+
+            <div class="prod-details">
+              <h4 class="prod-name" [title]="prod.productName">{{ prod.productName }}</h4>
+              <div class="prod-sku">{{ prod.barcode || ('SKU-' + prod.productId) }}</div>
+            </div>
+
+            <div class="prod-card-foot">
+              <div class="prod-price">৳ {{ prod.price | number:'1.0-0' }}</div>
+              <div class="prod-stock" [class.low]="getStock(prod.productId) > 0 && getStock(prod.productId) <= 5" [class.empty]="getStock(prod.productId) <= 0">
+                <span class="stock-dot"></span>
+                <span>{{ getStock(prod.productId) }} in stock</span>
+              </div>
+            </div>
+          </div>
+        }
+        @empty {
+          <div class="empty-catalog-message">
+            <p>No products available in this category.</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- RIGHT: CURRENT TICKET & PAYMENT SELECTION -->
+    <div class="pos-ticket-panel">
+      <div class="ticket-header">
+        <div>
+          <h2 class="ticket-title">Current Ticket</h2>
+          <span class="ticket-count">{{ totalItemsCount }} items</span>
+        </div>
+        <button class="clear-ticket-btn" (click)="clearTicket()" [disabled]="ticketItems.length === 0">
+          Clear
+        </button>
+      </div>
+
+      <!-- Customer Info -->
+      <div class="customer-info-row">
+        <input [(ngModel)]="customerPhone" placeholder="Customer phone (for invoice)..." />
+      </div>
+
+      <!-- Cart Items List -->
+      <div class="ticket-items-list">
+        @for (item of ticketItems; track item.product.productId) {
+          <div class="ticket-item">
+            <div class="item-head">
+              <div class="item-title" [title]="item.product.productName">{{ item.product.productName }}</div>
+              <button class="item-remove-btn" (click)="removeFromTicket(item)">×</button>
+            </div>
+
+            <div class="item-sub-info">
+              <span>৳ {{ item.product.price | number:'1.0-0' }} each</span>
+            </div>
+
+            <div class="item-controls-row">
+              <div class="stepper-box">
+                <button (click)="decrementQuantity(item)">-</button>
+                <span class="stepper-val">{{ item.quantity }}</span>
+                <button (click)="incrementQuantity(item)">+</button>
+              </div>
+              <div class="item-line-total">
+                ৳ {{ (item.product.price * item.quantity) | number:'1.0-0' }}
+              </div>
+            </div>
+          </div>
+        }
+        @empty {
+          <div class="empty-ticket-state">
+            <p>Ticket is empty. Click a product or scan barcode to add.</p>
+          </div>
+        }
+      </div>
+
+      <!-- Totals Breakdown -->
+      <div class="ticket-summary">
+        <div class="summary-line">
+          <span>Subtotal</span>
+          <span class="amount">৳ {{ subtotal | number:'1.2-2' }}</span>
+        </div>
+
+        <div class="summary-line">
+          <span>Discount (%)</span>
+          <div class="discount-box">
+            <input type="number" min="0" max="100" [(ngModel)]="discountPercent" placeholder="0" />
+            <span *ngIf="discountAmount > 0" class="text-danger small">- ৳ {{ discountAmount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="summary-line grand-total-line">
+          <span class="total-label">Grand Total</span>
+          <span class="total-amount">৳ {{ grandTotal | number:'1.2-2' }}</span>
+        </div>
+
+        <!-- PAYMENT TYPE SELECTOR (1. Cash | 2. Online) -->
+        <div class="payment-selection-section">
+          <label class="pay-section-label">Select Payment Method:</label>
+          <div class="pay-type-buttons">
+            <button
+              type="button"
+              class="pay-choice-btn"
+              [class.active]="paymentType === 1"
+              (click)="paymentType = 1"
+            >
+              Cash / Manual
+            </button>
+            <button
+              type="button"
+              class="pay-choice-btn"
+              [class.active]="paymentType === 2"
+              (click)="paymentType = 2"
+            >
+              Online (SSLCommerz)
+            </button>
+          </div>
+
+          <!-- If Cash / Manual: Reference / Trnx Box -->
+          @if (paymentType === 1) {
+            <div class="ref-input-box">
+              <label>Ref / Trnx No (Optional):</label>
+              <input
+                type="text"
+                [(ngModel)]="transactionRef"
+                placeholder="e.g. CASH-01, Slip #, or manual Ref"
+              />
+            </div>
+
+            <!-- Confirm & Print Button -->
+            <button
+              class="checkout-btn cash-checkout-btn"
+              [disabled]="ticketItems.length === 0 || isProcessing"
+              (click)="processSale()"
+            >
+              {{ isProcessing ? 'Processing Sale...' : 'Confirm & Print Invoice (৳ ' + (grandTotal | number:'1.0-0') + ')' }}
+            </button>
+          }
+
+          <!-- If Online (SSLCommerz) -->
+          @if (paymentType === 2) {
+            <div class="ssl-notice-box">
+              <small>Operator/Customer will be directed to SSLCommerz sandbox gateway, then redirected back to print invoice.</small>
+            </div>
+
+            <button
+              class="checkout-btn online-checkout-btn"
+              [disabled]="ticketItems.length === 0 || isProcessing"
+              (click)="processSale()"
+            >
+              {{ isProcessing ? 'Starting Gateway...' : 'Pay with SSLCommerz (৳ ' + (grandTotal | number:'1.0-0') + ')' }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     HIDDEN INVOICE TEMPLATE (VISIBLE ONLY WHEN PRINTING)
+========================================================= -->
+<div class="invoice-container d-none d-print-block" *ngIf="invoiceData">
+  <div class="receipt-header text-center">
+    <h2>TechPoint POS</h2>
+    <p>Computer Shop & Retail Management</p>
+    <p class="receipt-sub">Invoice #{{ invoiceData.orderId }} | {{ invoiceData.orderDate | date:'medium' }}</p>
+    <p class="receipt-sub" *ngIf="invoiceData.phone">Customer: {{ invoiceData.phone }}</p>
+    <p class="receipt-sub" *ngIf="invoiceData.transactionRef">Ref / Trnx: {{ invoiceData.transactionRef }}</p>
+    <hr class="receipt-line">
+  </div>
+
+  <table class="receipt-table">
+    <thead>
+      <tr>
+        <th align="left">Item</th>
+        <th align="center">Qty</th>
+        <th align="right">Price</th>
+        <th align="right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of invoiceData.items">
+        <td align="left">{{ item.productName }}</td>
+        <td align="center">{{ item.quantity }}</td>
+        <td align="right">৳ {{ item.unitPrice | number:'1.2-2' }}</td>
+        <td align="right">৳ {{ item.subtotal | number:'1.2-2' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr class="receipt-line">
+
+  <div class="receipt-totals text-end">
+    <p><strong>Subtotal:</strong> ৳ {{ invoiceData.totalAmount | number:'1.2-2' }}</p>
+    <p *ngIf="invoiceData.discountAmount > 0">
+      <strong>Discount ({{ invoiceData.discountPercent }}%):</strong> - ৳ {{ invoiceData.discountAmount | number:'1.2-2' }}
+    </p>
+    <h4 class="receipt-payable"><strong>Total Payable:</strong> ৳ {{ invoiceData.payableAmount | number:'1.2-2' }}</h4>
+    <p class="receipt-sub">Payment: {{ invoiceData.paymentMethod }} ({{ invoiceData.paymentStatus }})</p>
+  </div>
+
+  <div class="receipt-footer text-center">
+    <p>Thank you for shopping with us!</p>
+    <small>Warranty claims require this original invoice.</small>
+  </div>
+</div>

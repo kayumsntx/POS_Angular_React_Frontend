@@ -1,0 +1,221 @@
+<div class="dashboard-page">
+  <!-- Notice Banner -->
+  <div class="notice-banner">
+    <span class="banner-icon">⚡</span>
+    <div>
+      <strong>Enterprise Ready:</strong> Real-time POS dashboard with live order tracking, synchronized inventory, and
+      automated sales reporting.
+    </div>
+  </div>
+
+  <!-- KPI STATS GRID -->
+  <div class="stats-grid">
+    <!-- Stat 1: Total Revenue -->
+    <div class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">Total Revenue</span>
+        <span class="stat-icon purple">৳</span>
+      </div>
+      <div class="stat-value">৳ {{ totalSales() | number:'1.2-2' }}</div>
+      <div class="stat-foot">
+        <span class="trend up">↑ Live</span>
+        <span class="trend-sub">all completed orders</span>
+        <span class="period-tag">Realtime</span>
+      </div>
+    </div>
+
+    <!-- Stat 2: Total Orders -->
+    <div class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">Total Orders</span>
+        <span class="stat-icon green">🛒</span>
+      </div>
+      <div class="stat-value">{{ totalOrders() }}</div>
+      <div class="stat-foot">
+        <span class="trend up">↑ Live</span>
+        <span class="trend-sub">recorded invoices</span>
+        <span class="period-tag">Active</span>
+      </div>
+    </div>
+
+    <!-- Stat 3: Products Catalog -->
+    <div class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">Active Products</span>
+        <span class="stat-icon orange">📦</span>
+      </div>
+      <div class="stat-value">{{ totalProducts() }} <span class="unit">items</span></div>
+      <div class="stat-foot">
+        <span class="trend up">Listed</span>
+        <span class="trend-sub">catalog inventory</span>
+        <span class="period-tag">Store</span>
+      </div>
+    </div>
+
+    <!-- Stat 4: Pending Action -->
+    <div class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">Pending Orders</span>
+        <span class="stat-icon red">⚠️</span>
+      </div>
+      <div class="stat-value">{{ pendingOrders() }} <span class="unit">orders</span></div>
+      <div class="stat-foot">
+        <span class="trend down">Needs Review</span>
+        <span class="trend-sub">awaiting approval</span>
+        <span class="period-tag danger">Alert</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT GRID -->
+  <div class="content-grid">
+    <!-- 7-DAY SALES ANALYTICS CARD -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">7-Day Sales Activity</div>
+          <div class="card-sub">Real-time daily transaction breakdown</div>
+        </div>
+        <div class="chart-controls">
+          <button class="secondary-btn" routerLink="/orders">View Invoices →</button>
+        </div>
+      </div>
+
+      <!-- Real Live 7-Day Bar Chart -->
+      <div class="weekly-chart">
+        @for (day of weeklySales(); track day.dateStr) {
+        <div class="chart-col">
+          <span class="bar-amount" [class.has-sales]="day.amount > 0">
+            ৳ {{ day.amount | number:'1.0-0' }}
+          </span>
+          <div class="bar-track"
+            [title]="day.label + ': ৳ ' + (day.amount | number:'1.2-2') + ' (' + day.ordersCount + ' orders)'">
+            <div class="bar-fill" [style.height.%]="day.percent" [class.today-bar]="day.label === 'Today'"></div>
+          </div>
+          <span class="bar-day" [class.today-label]="day.label === 'Today'">{{ day.label }}</span>
+        </div>
+        }
+      </div>
+
+      <div class="chart-bottom-stats">
+        <div class="mini-stat">
+          <span>Average Order Value</span>
+          <strong>৳ {{ avgOrderValue() | number:'1.2-2' }}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Active SKU Count</span>
+          <strong>{{ totalProducts() }} Items</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Real-time Status</span>
+          <strong class="text-success">Live</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS & SHORTCUTS -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Quick Actions</div>
+          <div class="card-sub">Fast operations shortcuts</div>
+        </div>
+      </div>
+
+      <div class="quick-actions-list">
+        <a routerLink="/pos" class="quick-action-item">
+          <div class="qa-icon purple">🖥️</div>
+          <div class="qa-info">
+            <strong>Point of Sale (POS)</strong>
+            <small>Fast barcode scan & cash/online checkout</small>
+          </div>
+          <span class="qa-arrow">→</span>
+        </a>
+
+        <a routerLink="/products" class="quick-action-item">
+          <div class="qa-icon green">📦</div>
+          <div class="qa-info">
+            <strong>Product Catalog</strong>
+            <small>Add new items, update prices & specs</small>
+          </div>
+          <span class="qa-arrow">→</span>
+        </a>
+
+        <a routerLink="/inventory" class="quick-action-item">
+          <div class="qa-icon orange">📊</div>
+          <div class="qa-info">
+            <strong>Inventory Stock</strong>
+            <small>Monitor stock counts & replenish alerts</small>
+          </div>
+          <span class="qa-arrow">→</span>
+        </a>
+
+        <a routerLink="/categories" class="quick-action-item">
+          <div class="qa-icon blue">📁</div>
+          <div class="qa-info">
+            <strong>Category Hierarchy</strong>
+            <small>Organize hardware & accessory departments</small>
+          </div>
+          <span class="qa-arrow">→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT TRANSACTIONS TABLE -->
+  <div class="card table-card">
+    <div class="card-head" style="padding: 20px 24px 12px; margin-bottom: 0;">
+      <div>
+        <div class="card-title">Recent Transactions</div>
+        <div class="card-sub">Live customer purchases and checkout sessions</div>
+      </div>
+      <button class="secondary-btn" routerLink="/orders">All Orders ({{ totalOrders() }})</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Items</th>
+            <th>Payable</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of recentOrders(); track order.orderId) {
+          <tr>
+            <td><strong>#{{ order.orderId }}</strong></td>
+            <td>{{ order.orderDate | date:'mediumDate' }}</td>
+            <td>
+              <span class="type-pill">{{ order.orderType || 'POS' }}</span>
+            </td>
+            <td>{{ order.items?.length || 1 }} items</td>
+            <td><strong>৳ {{ (order.payableAmount || order.totalAmount) | number:'1.2-2' }}</strong></td>
+            <td>{{ order.paymentMethod || 'Cash' }}</td>
+            <td>
+              <span class="status" [ngClass]="getStatusClass(order.status)">
+                {{ order.status || 'Completed' }}
+              </span>
+            </td>
+            <td>
+              <a routerLink="/orders" class="link-btn">View Details →</a>
+            </td>
+          </tr>
+          }
+          @empty {
+          <tr>
+            <td colspan="8" class="text-center py-4 text-muted">
+              No orders recorded yet. Visit <a routerLink="/pos" class="link-btn">Point of Sale</a> to create one.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

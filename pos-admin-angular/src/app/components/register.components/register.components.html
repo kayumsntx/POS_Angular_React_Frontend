@@ -1,1 +1,49 @@
-<p>register.components works!</p>
+﻿<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-icon">💻</div>
+      <h2>Create Account</h2>
+      <p>Register a new operator or staff profile</p>
+    </div>
+
+    @if (errorMessage) {
+      <div class="alert alert-danger">{{ errorMessage }}</div>
+    }
+    
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label class="form-label">Email Address</label>
+        <input type="email" formControlName="email" class="form-control" placeholder="name@company.com" />
+        @if (registerForm.get('email')?.touched && registerForm.get('email')?.invalid) {
+          <div class="text-danger small mt-1">A valid email is required.</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Phone Number</label>
+        <input type="text" formControlName="phoneNumber" class="form-control" placeholder="01700000000" />
+        @if (registerForm.get('phoneNumber')?.touched && registerForm.get('phoneNumber')?.invalid) {
+          <div class="text-danger small mt-1">A valid phone number is required.</div>
+        }
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Password</label>
+        <input type="password" formControlName="password" class="form-control" placeholder="Minimum 6 characters" />
+        @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
+          <div class="text-danger small mt-1">Password must be at least 6 characters.</div>
+        }
+      </div>
+
+      <button type="submit" class="primary-btn w-100 justify-content-center py-2" [disabled]="registerForm.invalid || isLoading">
+        {{ isLoading ? 'Please wait...' : 'Register Profile' }}
+      </button>
+      
+      <!-- Link to Login -->
+      <div class="text-center mt-4">
+        <span class="text-muted">Already have an account? </span>
+        <a routerLink="/login" class="link-btn">Login here</a>
+      </div>
+    </form>
+  </div>
+</div>
