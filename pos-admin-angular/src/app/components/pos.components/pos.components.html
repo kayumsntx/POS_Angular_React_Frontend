@@ -1,4 +1,4 @@
-﻿<!-- VISIBLE POS INTERFACE (HIDDEN WHEN PRINTING) -->
+<!-- VISIBLE POS INTERFACE (HIDDEN WHEN PRINTING) -->
 <div class="pos-container d-print-none">
   <!-- POS TOPBAR -->
   <header class="pos-header">
@@ -62,7 +62,13 @@
           >
             <div class="prod-card-top">
               <div class="prod-thumb">
-                <div class="prod-icon-box">📦</div>
+                <img
+                  [src]="getImageUrl(prod)"
+                  [alt]="prod.productName"
+                  class="prod-image"
+                  (error)="onImgError($event)"
+                  loading="lazy"
+                />
               </div>
               <span class="badge-serialized">SERIALIZED</span>
             </div>

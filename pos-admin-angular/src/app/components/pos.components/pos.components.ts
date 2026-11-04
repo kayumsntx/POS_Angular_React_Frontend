@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -51,12 +51,32 @@ export class PosComponent implements OnInit {
   private orderService = inject(OrderService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   // Catalog State
   products: Product[] = [];
   categories: Category[] = [];
   inventoryStock: { [productId: number]: number } = {};
   isLoading = true;
+  serverUrl = 'http://localhost:5109';
+
+  getImageUrl(prod: Product): string {
+    if (!prod?.imageUrl) {
+      return `${this.serverUrl}/images/noimage.jpg`;
+    }
+    if (prod.imageUrl.startsWith('http://') || prod.imageUrl.startsWith('https://')) {
+      return prod.imageUrl;
+    }
+    const clean = prod.imageUrl.startsWith('/') ? prod.imageUrl : `/images/${prod.imageUrl}`;
+    return `${this.serverUrl}${clean}`;
+  }
+
+  onImgError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target && !target.src.includes('noimage.jpg')) {
+      target.src = `${this.serverUrl}/images/noimage.jpg`;
+    }
+  }
 
   // Filter & Search
   selectedCategoryId: number | null = null;
@@ -70,8 +90,7 @@ export class PosComponent implements OnInit {
   discountPercent = 0;
   taxRate = 0;
 
-  // Payment Options
-  // 1 = Cash, 2 = Online (SSLCommerz)
+  // Payment Options (1 = Cash, 2 = Online)
   paymentType: PaymentMethodType = PaymentMethodType.Cash;
   transactionRef = '';
   isProcessing = false;
@@ -101,9 +120,11 @@ export class PosComponent implements OnInit {
           this.inventoryStock[inv.productId] = (this.inventoryStock[inv.productId] || 0) + (inv.quantity || 0);
         }
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -116,6 +137,8 @@ export class PosComponent implements OnInit {
 
       if (status === 'success' && orderId) {
         this.successNotice = `Online payment successful for Order #${orderId}. Generating invoice...`;
+        this.cdr.detectChanges();
+
         this.orderService.getOrderById(+orderId).subscribe({
           next: (order) => {
             this.invoiceData = {
@@ -137,13 +160,12 @@ export class PosComponent implements OnInit {
               }))
             };
 
-            // Remove query params from URL quietly
             this.router.navigate([], { queryParams: {}, replaceUrl: true });
+            this.cdr.detectChanges();
 
-            // Auto-trigger print
             setTimeout(() => {
               window.print();
-            }, 600);
+            }, 300);
           },
           error: (err) => {
             console.error('Failed to load order for invoice print:', err);
@@ -152,6 +174,7 @@ export class PosComponent implements OnInit {
       } else if (status === 'fail' || status === 'cancel') {
         this.errorMessage = `Online payment was ${status}ed. You can retry with Cash or another method.`;
         this.router.navigate([], { queryParams: {}, replaceUrl: true });
+        this.cdr.detectChanges();
       }
     });
   }
@@ -215,15 +238,17 @@ export class PosComponent implements OnInit {
         serialNumber: ''
       });
     }
+    this.cdr.detectChanges();
   }
 
   incrementQuantity(item: CartItem): void {
     const stock = this.getStock(item.product.productId);
     if (item.quantity >= stock) {
-      alert(`Cannot add more. Only ${stock} items available in stock.`);
+      alert(`Cannot add more. Available stock limit reached: ${stock}`);
       return;
     }
     item.quantity += 1;
+    this.cdr.detectChanges();
   }
 
   decrementQuantity(item: CartItem): void {
@@ -232,10 +257,12 @@ export class PosComponent implements OnInit {
     } else {
       this.removeFromTicket(item);
     }
+    this.cdr.detectChanges();
   }
 
   removeFromTicket(item: CartItem): void {
     this.ticketItems = this.ticketItems.filter(i => i !== item);
+    this.cdr.detectChanges();
   }
 
   clearTicket(): void {
@@ -244,6 +271,8 @@ export class PosComponent implements OnInit {
     this.customerPhone = '';
     this.transactionRef = '';
     this.errorMessage = '';
+    this.isProcessing = false;
+    this.cdr.detectChanges();
   }
 
   // Financial calculations
@@ -273,6 +302,7 @@ export class PosComponent implements OnInit {
 
     this.isProcessing = true;
     this.errorMessage = '';
+    this.cdr.detectChanges();
 
     const payload: CreateOrderDto = {
       phone: this.customerPhone.trim() || undefined,
@@ -287,12 +317,12 @@ export class PosComponent implements OnInit {
     this.orderService.createOrder(payload).subscribe({
       next: (response) => {
         try { localStorage.setItem('pos_order_sync', Date.now().toString()); } catch {}
-        this.isProcessing = false;
 
         // 1. ONLINE PAYMENT FLOW (SSLCOMMERZ)
         if (this.paymentType === PaymentMethodType.Online) {
+          this.isProcessing = false;
+          this.cdr.detectChanges();
           if (response.gatewayPageURL) {
-            // Redirect operator/customer to SSLCommerz payment page
             window.location.href = response.gatewayPageURL;
             return;
           } else {
@@ -332,15 +362,26 @@ export class PosComponent implements OnInit {
           }
         }
 
-        // Trigger automatic print and reset ticket
+        // Reset cart and processing state IMMEDIATELY before printing
+        this.isProcessing = false;
+        this.ticketItems = [];
+        this.discountPercent = 0;
+        this.customerPhone = '';
+        this.transactionRef = '';
+        this.errorMessage = '';
+
+        // Force Angular to instantly repaint the empty cart & reset button
+        this.cdr.detectChanges();
+
+        // Trigger browser print dialog
         setTimeout(() => {
           window.print();
-          this.clearTicket();
-        }, 400);
+        }, 250);
       },
       error: (err) => {
         this.isProcessing = false;
         this.errorMessage = err.error?.message || err.message || 'Failed to complete order. Please check connection.';
+        this.cdr.detectChanges();
       }
     });
   }
