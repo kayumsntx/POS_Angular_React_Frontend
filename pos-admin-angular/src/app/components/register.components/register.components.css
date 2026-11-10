@@ -19,7 +19,19 @@
 
 .login-brand {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+}
+
+.alert-danger {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 18px;
+  line-height: 1.4;
 }
 
 .brand-icon {

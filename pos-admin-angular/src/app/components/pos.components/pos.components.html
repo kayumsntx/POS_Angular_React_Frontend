@@ -14,7 +14,7 @@
   }
 
   <!-- MAIN WORKSPACE GRID -->
-  <div class="pos-grid">
+  <div class="pos-grid" [class.ticket-collapsed]="!isTicketOpen">
     <!-- LEFT: CATALOG & BARCODE SCANNER -->
     <div class="pos-catalog-panel">
       <!-- Barcode scan -->
@@ -29,6 +29,15 @@
           />
         </div>
         <button class="scan-add-btn" (click)="onBarcodeScan()">Add</button>
+        @if (!isTicketOpen) {
+          <button class="open-ticket-shortcut-btn" (click)="toggleTicket()" type="button" title="Open Ticket">
+            <span>🛒</span>
+            <span>Ticket ({{ totalItemsCount }})</span>
+            @if (grandTotal > 0) {
+              <span class="shortcut-price">৳{{ grandTotal | number:'1.0-0' }}</span>
+            }
+          </button>
+        }
       </div>
 
       <!-- Category Filter Pills -->
@@ -58,33 +67,49 @@
           <div
             class="product-card"
             [class.out-of-stock]="getStock(prod.productId) <= 0"
-            (click)="addToTicket(prod)"
           >
-            <div class="prod-card-top">
-              <div class="prod-thumb">
-                <img
-                  [src]="getImageUrl(prod)"
-                  [alt]="prod.productName"
-                  class="prod-image"
-                  (error)="onImgError($event)"
-                  loading="lazy"
-                />
+            <!-- Card Top: Stock Badge -->
+            <div class="prod-card-header">
+              <div
+                class="prod-stock-badge"
+                [class.in-stock]="getStock(prod.productId) > 0"
+                [class.out-of-stock]="getStock(prod.productId) <= 0"
+              >
+                <span class="stock-dot"></span>
+                <span>{{ getStock(prod.productId) }} In Stock</span>
               </div>
-              <span class="badge-serialized">SERIALIZED</span>
             </div>
 
+            <!-- Product Image (Large & Centered) -->
+            <div class="prod-image-wrapper">
+              <img
+                [src]="getImageUrl(prod)"
+                [alt]="prod.productName"
+                class="prod-image"
+                (error)="onImgError($event)"
+                loading="lazy"
+              />
+            </div>
+
+            <!-- Below Product Image: Name & Price -->
             <div class="prod-details">
               <h4 class="prod-name" [title]="prod.productName">{{ prod.productName }}</h4>
-              <div class="prod-sku">{{ prod.barcode || ('SKU-' + prod.productId) }}</div>
-            </div>
 
-            <div class="prod-card-foot">
-              <div class="prod-price">৳ {{ prod.price | number:'1.0-0' }}</div>
-              <div class="prod-stock" [class.low]="getStock(prod.productId) > 0 && getStock(prod.productId) <= 5" [class.empty]="getStock(prod.productId) <= 0">
-                <span class="stock-dot"></span>
-                <span>{{ getStock(prod.productId) }} in stock</span>
+              <div class="prod-pricing">
+                <span class="prod-current-price">৳{{ prod.price | number:'1.2-2' }}</span>
               </div>
             </div>
+
+            <!-- Card Action: Add to Cart Button (Only clicking here adds product) -->
+            <button
+              type="button"
+              class="add-to-cart-btn"
+              [disabled]="getStock(prod.productId) <= 0"
+              (click)="addToTicket(prod)"
+            >
+              <span>🛒</span>
+              <span>{{ getStock(prod.productId) > 0 ? 'Add to Cart' : 'Out of Stock' }}</span>
+            </button>
           </div>
         }
         @empty {
@@ -96,16 +121,22 @@
     </div>
 
     <!-- RIGHT: CURRENT TICKET & PAYMENT SELECTION -->
-    <div class="pos-ticket-panel">
-      <div class="ticket-header">
-        <div>
-          <h2 class="ticket-title">Current Ticket</h2>
-          <span class="ticket-count">{{ totalItemsCount }} items</span>
+    @if (isTicketOpen) {
+      <div class="pos-ticket-panel">
+        <div class="ticket-header">
+          <div>
+            <h2 class="ticket-title">Current Ticket</h2>
+            <span class="ticket-count">{{ totalItemsCount }} items</span>
+          </div>
+          <div class="ticket-header-actions">
+            <button class="clear-ticket-btn" (click)="clearTicket()" [disabled]="ticketItems.length === 0">
+              Clear
+            </button>
+            <button class="fold-ticket-btn" (click)="toggleTicket()" type="button" title="Close Ticket">
+              ✕ Close
+            </button>
+          </div>
         </div>
-        <button class="clear-ticket-btn" (click)="clearTicket()" [disabled]="ticketItems.length === 0">
-          Clear
-        </button>
-      </div>
 
       <!-- Customer Info -->
       <div class="customer-info-row">
@@ -224,6 +255,22 @@
         </div>
       </div>
     </div>
+  } @else {
+      <!-- COLLAPSED TICKET DOCK / RAIL -->
+      <aside class="pos-ticket-dock" (click)="toggleTicket()" title="Open Current Ticket">
+        <div class="dock-badge-wrap">
+          <span class="dock-icon">🛒</span>
+          @if (totalItemsCount > 0) {
+            <span class="dock-badge">{{ totalItemsCount }}</span>
+          }
+        </div>
+        <div class="dock-label">Ticket</div>
+        @if (grandTotal > 0) {
+          <div class="dock-total">৳{{ grandTotal | number:'1.0-0' }}</div>
+        }
+        <span class="dock-arrow">◀</span>
+      </aside>
+    }
   </div>
 </div>
 

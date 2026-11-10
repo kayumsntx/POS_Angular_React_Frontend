@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { Component } from '@angular/core';
-import { RouterOutlet, RouterModule } from '@angular/router';
+import { Router, RouterOutlet, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -15,6 +15,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class LayoutComponents {
   sidebarOpen = false;
+  router = inject(Router);
 
   constructor(public auth: AuthService) {}
 
@@ -26,8 +27,18 @@ export class LayoutComponents {
     this.sidebarOpen = false;
   }
 
+  isHomePage(): boolean {
+    const url = this.router.url;
+    return url === '/' || url === '/home' || url.startsWith('/home?') || url.startsWith('/?');
+  }
+
+  isPosPage(): boolean {
+    const url = this.router.url;
+    return url === '/pos' || url.startsWith('/pos?') || url.startsWith('/pos/');
+  }
+
   getUserInitials(): string {
-    const name = this.auth.userName || 'Admin';
+    const name = this.auth.userName || 'User';
     const parts = name.trim().split(' ');
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -47,7 +58,6 @@ export interface UserDto {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private http = inject(HttpClient);
-  // Ensure this matches your actual ASP.NET Core controller route
   private apiUrl = 'http://localhost:5109/api/Users'; 
 
   getUsers(): Observable<UserDto[]> {
@@ -56,9 +66,5 @@ export class UserService {
 
   assignRole(userId: string, roleName: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/assign-role`, { userId, roleName });
-  }
-
-  removeRole(userId: string, roleName: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/remove-role`, { userId, roleName });
   }
 }

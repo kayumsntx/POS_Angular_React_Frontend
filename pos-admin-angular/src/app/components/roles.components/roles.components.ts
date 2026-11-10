@@ -4,7 +4,7 @@ import { Role } from '../../models/role';
 import { RoleService } from '../../services/role.service';
 
 
-const BUILT_IN = ['Admin', 'POSOperator', 'Cashier', 'Salesman','User'];
+const BUILT_IN = ['Admin', 'User', 'Cashier'];
 
 @Component({
   selector: 'app-roles',

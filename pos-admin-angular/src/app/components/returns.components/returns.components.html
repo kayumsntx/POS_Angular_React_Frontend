@@ -1,0 +1,332 @@
+<div class="returns-page-container">
+  <!-- PAGE HEADER -->
+  <header class="returns-page-header">
+    <div class="rph-left">
+      <div class="rph-icon-box">↩️</div>
+      <div>
+        <h1 class="rph-title">Order Returns & Refunds</h1>
+        <p class="rph-subtitle">Look up customer orders, select returnable items, enter remarks, and process inventory restock and refunds.</p>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="returns-nav-tabs">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'process'"
+        (click)="setTab('process')"
+      >
+        <span>↩️</span>
+        <span>Process Return</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'history'"
+        (click)="setTab('history')"
+      >
+        <span>📜</span>
+        <span>Return History ({{ returnHistory.length }})</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- TAB 1: PROCESS RETURN -->
+  @if (activeTab === 'process') {
+    <div class="return-workspace-card">
+      <!-- Search Bar Section -->
+      <div class="order-search-panel">
+        <div class="search-form-group">
+          <label for="searchOrderIdInput" class="search-label">Order ID</label>
+          <div class="search-input-wrapper">
+            <span class="search-hash">#</span>
+            <input
+              id="searchOrderIdInput"
+              type="number"
+              class="search-order-input"
+              [(ngModel)]="searchOrderId"
+              (keydown.enter)="fetchOrder()"
+              placeholder="Enter Order ID (e.g. 6)..."
+              [disabled]="isLoadingOrder || isSubmitting"
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-fetch-order"
+          (click)="fetchOrder()"
+          [disabled]="isLoadingOrder || isSubmitting"
+        >
+          <span>🔍</span>
+          <span>{{ isLoadingOrder ? 'Searching...' : 'Find Order' }}</span>
+        </button>
+      </div>
+
+      <!-- Alerts -->
+      @if (errorMessage) {
+        <div class="return-alert-box alert-error">
+          <span class="alert-icon">⚠️</span>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+      @if (successMessage) {
+        <div class="return-alert-box alert-success">
+          <span class="alert-icon">🎉</span>
+          <span>{{ successMessage }}</span>
+        </div>
+      }
+
+      <!-- Order Metadata Bar -->
+      @if (orderData) {
+        <div class="order-meta-card">
+          <div class="meta-item">
+            <span class="meta-label">Order Reference</span>
+            <strong class="meta-val highlight">#{{ orderData.orderId }}</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Channel</span>
+            <span class="meta-val">{{ orderData.orderType || 'POS' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Customer Phone</span>
+            <span class="meta-val">{{ orderData.phone || 'N/A' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Total Amount Paid</span>
+            <strong class="meta-val">৳ {{ orderData.payableAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Order Status</span>
+            <span class="meta-badge-status">{{ orderData.status }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Product Items Table -->
+      @if (productRows.length > 0) {
+        <div class="return-table-card">
+          <table class="return-products-table">
+            <thead>
+              <tr>
+                <th class="th-center" style="width: 70px;">isReturn</th>
+                <th>Product</th>
+                <th class="th-right" style="width: 120px;">Unit Price</th>
+                <th class="th-center" style="width: 90px;">Purchased</th>
+                <th class="th-center" style="width: 100px;">Returnable</th>
+                <th class="th-center" style="width: 110px;">Return Qty</th>
+                <th class="th-right" style="width: 130px;">Refund Subtotal</th>
+                <th style="min-width: 220px;">Remark / Cause</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of productRows; track row.orderItemId) {
+                <tr [class.row-active]="row.isReturn" [class.row-exhausted]="row.remainingQuantity <= 0">
+                  <!-- 1. isReturn Checkbox -->
+                  <td class="th-center">
+                    <input
+                      type="checkbox"
+                      class="row-checkbox"
+                      [(ngModel)]="row.isReturn"
+                      (change)="onToggleItemReturn(row)"
+                      [disabled]="row.remainingQuantity <= 0 || isSubmitting"
+                    />
+                  </td>
+
+                  <!-- 2. Product Name -->
+                  <td>
+                    <div class="prod-title">{{ row.productName }}</div>
+                    @if (row.remainingQuantity <= 0) {
+                      <span class="tag-fully-returned">Already Returned</span>
+                    }
+                  </td>
+
+                  <!-- 3. Unit Price -->
+                  <td class="th-right num-font">
+                    ৳ {{ row.unitPrice | number:'1.2-2' }}
+                  </td>
+
+                  <!-- 4. Purchased Qty -->
+                  <td class="th-center num-font">
+                    {{ row.orderedQuantity }}
+                  </td>
+
+                  <!-- 5. Returnable Qty -->
+                  <td class="th-center num-font">
+                    <span [class.qty-zero]="row.remainingQuantity <= 0">
+                      {{ row.remainingQuantity }}
+                    </span>
+                  </td>
+
+                  <!-- 6. Editable Return Qty -->
+                  <td class="th-center">
+                    <input
+                      type="number"
+                      class="qty-input-box"
+                      [(ngModel)]="row.returnQuantity"
+                      (input)="onReturnQuantityChange(row)"
+                      [min]="1"
+                      [max]="row.remainingQuantity"
+                      [disabled]="!row.isReturn || row.remainingQuantity <= 0 || isSubmitting"
+                    />
+                  </td>
+
+                  <!-- 7. Refund Subtotal -->
+                  <td class="th-right num-font refund-val">
+                    ৳ {{ (row.isReturn ? row.returnQuantity * row.unitPrice : 0) | number:'1.2-2' }}
+                  </td>
+
+                  <!-- 8. Remark / Cause -->
+                  <td>
+                    <input
+                      type="text"
+                      class="remark-input-box"
+                      [(ngModel)]="row.remark"
+                      placeholder="Write cause / reason..."
+                      [disabled]="!row.isReturn || isSubmitting"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Action & Summary Bar -->
+        <div class="return-bottom-action-bar">
+          <div class="refund-stats-summary">
+            <div class="stat-pill">
+              <span class="sp-label">Items Selected:</span>
+              <strong class="sp-val">{{ selectedReturnCount }} of {{ productRows.length }}</strong>
+            </div>
+
+            <div class="stat-pill highlight">
+              <span class="sp-label">Total Refund:</span>
+              <strong class="sp-val refund-money">৳ {{ totalRefundAmount | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn-confirm-return"
+            (click)="confirmReturn()"
+            [disabled]="isSubmitting || selectedReturnCount === 0"
+          >
+            <span>↩️</span>
+            <span>{{ isSubmitting ? 'Processing Return...' : 'Confirm Return' }}</span>
+          </button>
+        </div>
+      } @else if (!successMessage) {
+        <div class="return-empty-state">
+          <span class="empty-icon">📋</span>
+          <h3>No Order Loaded</h3>
+          <p>Enter an Order ID above and click <strong>Find Order</strong> to display purchased products and select items for return.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TAB 2: RETURN HISTORY -->
+  @if (activeTab === 'history') {
+    <div class="return-workspace-card">
+      <div class="history-table-header">
+        <h3 class="hth-title">Processed Returns Log</h3>
+        <button type="button" class="btn-refresh-history" (click)="loadHistory()">
+          <span>🔄</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      @if (isLoadingHistory) {
+        <div class="history-loading">Loading return records...</div>
+      } @else if (returnHistory.length === 0) {
+        <div class="return-empty-state">
+          <span class="empty-icon">📦</span>
+          <h3>No Returns Processed Yet</h3>
+          <p>Any returned orders will appear here with full audit details.</p>
+        </div>
+      } @else {
+        <div class="return-table-card">
+          <table class="return-products-table">
+            <thead>
+              <tr>
+                <th style="width: 100px;">Return ID</th>
+                <th style="width: 100px;">Order ID</th>
+                <th>Return Date</th>
+                <th class="th-center" style="width: 120px;">Items Returned</th>
+                <th class="th-right" style="width: 140px;">Total Refund</th>
+                <th class="th-center" style="width: 110px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ret of returnHistory; track ret.returnId) {
+                <tr>
+                  <td><strong class="highlight">#{{ ret.returnId }}</strong></td>
+                  <td>#{{ ret.orderId }}</td>
+                  <td>{{ ret.returnDate | date:'medium' }}</td>
+                  <td class="th-center num-font">{{ ret.items.length || 0 }} items</td>
+                  <td class="th-right num-font refund-val">৳ {{ getReturnTotal(ret) | number:'1.2-2' }}</td>
+                  <td class="th-center">
+                    <button type="button" class="btn-view-details" (click)="viewHistoryDetails(ret)">
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- DETAIL MODAL FOR HISTORY -->
+  @if (selectedHistoryReturn) {
+    <div class="modal-backdrop-custom" (click)="closeHistoryDetails()">
+      <div class="history-modal-dialog" (click)="$event.stopPropagation()">
+        <div class="hmd-header">
+          <div>
+            <h3>Return #{{ selectedHistoryReturn.returnId }} Details</h3>
+            <p>Original Order #{{ selectedHistoryReturn.orderId }} | Processed on {{ selectedHistoryReturn.returnDate | date:'medium' }}</p>
+          </div>
+          <button type="button" class="hmd-close-btn" (click)="closeHistoryDetails()">✕</button>
+        </div>
+
+        <div class="hmd-body">
+          <table class="return-products-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="th-right">Unit Price</th>
+                <th class="th-center">Qty Returned</th>
+                <th class="th-right">Subtotal</th>
+                <th>Remark / Cause</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of selectedHistoryReturn.items; track item.returnItemId) {
+                <tr>
+                  <td><strong>{{ item.productName }}</strong></td>
+                  <td class="th-right num-font">৳ {{ item.unitPrice | number:'1.2-2' }}</td>
+                  <td class="th-center num-font">{{ item.quantity }}</td>
+                  <td class="th-right num-font refund-val">৳ {{ (item.quantity * item.unitPrice) | number:'1.2-2' }}</td>
+                  <td>{{ item.returnReason || 'N/A' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="hmd-footer">
+          <div class="hmd-total-refund">
+            Total Refund: <strong>৳ {{ getReturnTotal(selectedHistoryReturn) | number:'1.2-2' }}</strong>
+          </div>
+          <button type="button" class="btn-close-modal" (click)="closeHistoryDetails()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

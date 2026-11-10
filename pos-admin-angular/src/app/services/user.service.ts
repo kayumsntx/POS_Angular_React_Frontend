@@ -1,8 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 export interface UserDto {
+  id?: number;
   userName: string;
   email: string;
   phoneNumber: string;
@@ -12,21 +14,40 @@ export interface UserDto {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private http = inject(HttpClient);
-  // 1. Updated to match [Route("api/[controller]")] for RoleController
-  private apiUrl = 'http://localhost:5109/api/Role'; 
+  private roleApiUrl = 'http://localhost:5109/api/Role'; 
+  private accountApiUrl = 'http://localhost:5109/api/Account';
 
   getUsers(): Observable<UserDto[]> {
-    // 2. Matches [HttpGet("all-users")]
-    return this.http.get<UserDto[]>(`${this.apiUrl}/all-users`);
+    return forkJoin({
+      rolesList: this.http.get<UserDto[]>(`${this.roleApiUrl}/all-users`).pipe(catchError(() => of([]))),
+      accountsList: this.http.get<{ id: number; userName: string; email: string; phoneNumber: string }[]>(this.accountApiUrl).pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ rolesList, accountsList }) => {
+        return (rolesList || []).map((u) => {
+          const match = (accountsList || []).find(
+            (a) =>
+              (a.phoneNumber && u.phoneNumber && a.phoneNumber.trim() === u.phoneNumber.trim()) ||
+              (a.email && u.email && a.email.toLowerCase().trim() === u.email.toLowerCase().trim()) ||
+              (a.userName && u.userName && a.userName.toLowerCase().trim() === u.userName.toLowerCase().trim())
+          );
+          return {
+            ...u,
+            id: match?.id
+          };
+        });
+      })
+    );
   }
 
   assignRole(phoneNumber: string, roleName: string): Observable<any> {
-    // 3. Matches [HttpPost] (AssignRole) sending { PhoneNumber, RoleName }
-    return this.http.post(this.apiUrl, { phoneNumber, roleName });
+    return this.http.post(this.roleApiUrl, { phoneNumber, roleName });
   }
 
   removeRole(phoneNumber: string, roleName: string): Observable<any> {
-    // 4. Matches [HttpPost("remove")]
-    return this.http.post(`${this.apiUrl}/remove`, { phoneNumber, roleName });
+    return this.http.post(`${this.roleApiUrl}/remove`, { phoneNumber, roleName });
+  }
+
+  deleteUser(id: number): Observable<any> {
+    return this.http.delete(`${this.accountApiUrl}/${id}`);
   }
 }

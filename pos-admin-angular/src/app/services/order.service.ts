@@ -23,6 +23,12 @@ export class OrderService {
     return this.http.get<Order[]>(this.apiUrl);
   }
 
+  getOrdersByDateRange(startDate: string, endDate: string): Observable<Order[]> {
+    return this.http.get<Order[]>(`${this.apiUrl}/date-range`, {
+      params: { startDate, endDate }
+    });
+  }
+
   getOrderById(id: number): Observable<Order> {
     return this.http.get<Order>(`${this.apiUrl}/${id}`);
   }

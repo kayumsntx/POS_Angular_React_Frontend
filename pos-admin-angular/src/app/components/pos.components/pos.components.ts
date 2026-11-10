@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -44,7 +44,7 @@ export interface InvoiceData {
   templateUrl: './pos.components.html',
   styleUrls: ['./pos.components.css']
 })
-export class PosComponent implements OnInit {
+export class PosComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private inventoryService = inject(InventoryService);
@@ -52,6 +52,11 @@ export class PosComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+
+  // Real-time synchronization
+  private catalogChannel?: BroadcastChannel;
+  private catalogListener?: () => void;
+  private pollInterval?: any;
 
   // Catalog State
   products: Product[] = [];
@@ -84,11 +89,17 @@ export class PosComponent implements OnInit {
   barcodeInput = '';
 
   // Ticket / Cart State
+  isTicketOpen = false;
   ticketItems: CartItem[] = [];
   customerPhone = '';
   customerName = 'Walk-in Customer';
   discountPercent = 0;
   taxRate = 0;
+
+  toggleTicket(): void {
+    this.isTicketOpen = !this.isTicketOpen;
+    this.cdr.detectChanges();
+  }
 
   // Payment Options (1 = Cash, 2 = Online)
   paymentType: PaymentMethodType = PaymentMethodType.Cash;
@@ -101,12 +112,49 @@ export class PosComponent implements OnInit {
   invoiceData: InvoiceData | null = null;
 
   ngOnInit(): void {
-    this.loadCatalog();
+    this.loadCatalog(true);
     this.checkOnlinePaymentReturn();
+
+    // ── Real-time catalog synchronization ─────────────────────────────────────
+    try {
+      this.catalogChannel = new BroadcastChannel('techpoint_catalog_sync');
+      this.catalogChannel.onmessage = () => {
+        this.loadCatalog(false);
+      };
+    } catch {}
+
+    this.catalogListener = () => this.loadCatalog(false);
+    window.addEventListener('techpoint_catalog_updated', this.catalogListener);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'techpoint_catalog_version') {
+        this.loadCatalog(false);
+      }
+    });
+    window.addEventListener('focus', this.catalogListener);
+
+    // Periodic gentle refresh every 30 seconds for cross-device updates
+    this.pollInterval = setInterval(() => {
+      this.loadCatalog(false);
+    }, 30000);
   }
 
-  loadCatalog(): void {
-    this.isLoading = true;
+  ngOnDestroy(): void {
+    if (this.catalogChannel) {
+      this.catalogChannel.close();
+    }
+    if (this.catalogListener) {
+      window.removeEventListener('techpoint_catalog_updated', this.catalogListener);
+      window.removeEventListener('focus', this.catalogListener);
+    }
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+    }
+  }
+
+  loadCatalog(showLoading = true): void {
+    if (showLoading) {
+      this.isLoading = true;
+    }
     forkJoin({
       products: this.productService.getProducts().pipe(catchError(() => of([]))),
       categories: this.categoryService.getCategories().pipe(catchError(() => of([]))),
@@ -119,6 +167,17 @@ export class PosComponent implements OnInit {
         for (const inv of inventories || []) {
           this.inventoryStock[inv.productId] = (this.inventoryStock[inv.productId] || 0) + (inv.quantity || 0);
         }
+
+        // Live sync cart item references if product price/name was updated by Admin
+        if (this.ticketItems.length > 0) {
+          for (const item of this.ticketItems) {
+            const updated = this.products.find(p => p.productId === item.product.productId);
+            if (updated) {
+              item.product = updated;
+            }
+          }
+        }
+
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -238,6 +297,8 @@ export class PosComponent implements OnInit {
         serialNumber: ''
       });
     }
+    // Auto open ticket when product is added and keep open
+    this.isTicketOpen = true;
     this.cdr.detectChanges();
   }
 

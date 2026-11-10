@@ -2,14 +2,14 @@ import { Component, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { Router, RouterModule } from '@angular/router'; // <-- RouterModule added here
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule], // <-- RouterModule added here
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.components.html',
-  styleUrls: ['./login.components.css'] // (Optional: keep if you have a CSS file)
+  styleUrls: ['./login.components.css']
 })
 export class LoginComponent {
   form: FormGroup;
@@ -38,7 +38,12 @@ export class LoginComponent {
     this.auth.login(phoneNumber, password).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/']); // or wherever you redirect after login
+        const role = (this.auth.role || '').toLowerCase();
+        if (role === 'user') {
+          this.router.navigate(['/home']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
         this.loading.set(false);

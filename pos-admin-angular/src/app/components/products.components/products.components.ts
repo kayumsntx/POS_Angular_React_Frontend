@@ -89,6 +89,7 @@ export class ProductsComponents implements OnInit {
   }
 
   private finish(): void {
+    this.productService.notifyCatalogChanged();
     this.loadProducts();
     this.resetForm();
   }
@@ -111,7 +112,10 @@ export class ProductsComponents implements OnInit {
   deleteProduct(id: number): void {
     if (confirm('Are you sure to delete this product?')) {
       this.productService.deleteProduct(id).subscribe({
-        next: () => this.loadProducts(),
+        next: () => {
+          this.productService.notifyCatalogChanged();
+          this.loadProducts();
+        },
         error: (err) => this.showError(err),
       });
     }

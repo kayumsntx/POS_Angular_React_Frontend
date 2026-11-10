@@ -52,6 +52,11 @@
             "styles": [
               "bootstrap/dist/css/bootstrap.min.css",
               "src/styles.css"
+            ],
+            "allowedCommonJsDependencies": [
+              "react",
+              "react-dom",
+              "react/jsx-runtime"
             ]
           },
           "configurations": {

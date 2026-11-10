@@ -39,17 +39,66 @@
 }
 
 <div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="mb-0">Orders</h4>
-    <select class="form-select form-select-sm" style="width: 180px" (change)="onFilterChange($event)">
-      <option value="">All</option>
-      <option value="Pending">Pending</option>
-      <option value="Approved">Approved</option>
-      <option value="Cancelled">Cancelled</option>
-      <option value="Paid">Paid</option>
-      <option value="Unpaid">Unpaid</option>
-      <option value="Online">Online</option>
-    </select>
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h4 class="mb-0">Orders & Invoices</h4>
+      <span class="badge bg-secondary">{{ orders().length }}</span>
+    </div>
+
+    <!-- Controls: Date Range, Status Filter, Export CSV -->
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <div class="d-flex align-items-center gap-1">
+        <label class="form-label mb-0 small text-muted">From:</label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          style="width: 135px;"
+          [ngModel]="startDate()"
+          (ngModelChange)="startDate.set($event)"
+        />
+      </div>
+
+      <div class="d-flex align-items-center gap-1">
+        <label class="form-label mb-0 small text-muted">To:</label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          style="width: 135px;"
+          [ngModel]="endDate()"
+          (ngModelChange)="endDate.set($event)"
+        />
+      </div>
+
+      <button type="button" class="btn btn-sm btn-primary" (click)="applyDateFilter()">
+        Filter
+      </button>
+
+      @if (startDate() || endDate()) {
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetDateFilter()">
+          Reset
+        </button>
+      }
+
+      <select class="form-select form-select-sm" style="width: 120px" (change)="onFilterChange($event)">
+        <option value="">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Cancelled">Cancelled</option>
+        <option value="Paid">Paid</option>
+        <option value="Unpaid">Unpaid</option>
+        <option value="Online">Online</option>
+      </select>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-success d-flex align-items-center gap-1"
+        (click)="exportToCsv()"
+        title="Download filtered orders report as CSV"
+      >
+        <span>📊</span>
+        <span>Export CSV</span>
+      </button>
+    </div>
   </div>
   <div class="card-body p-0">
     <table class="table table-bordered mb-0">

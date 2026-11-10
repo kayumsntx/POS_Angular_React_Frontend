@@ -26,10 +26,11 @@
             <th>Email</th>
             <th>Phone Number</th>
             <th>Assigned Roles</th>
+            <th class="text-end">Action</th>
           </tr>
         </thead>
         <tbody>
-          @for (user of users(); track user.phoneNumber) {
+          @for (user of users(); track (user.id || user.phoneNumber + user.email)) {
             <tr>
               <td>
                 <strong>{{ user.userName }}</strong>
@@ -51,11 +52,25 @@
                   }
                 </div>
               </td>
+              <td class="text-end">
+                @if (isSelf(user)) {
+                  <span class="current-user-badge">You</span>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn-delete-user"
+                    title="Permanently remove user"
+                    (click)="deleteUser(user)"
+                  >
+                    Delete
+                  </button>
+                }
+              </td>
             </tr>
           }
           @empty {
             <tr>
-              <td colspan="4" class="text-center py-4 text-muted">
+              <td colspan="5" class="text-center py-4 text-muted">
                 No users found.
               </td>
             </tr>

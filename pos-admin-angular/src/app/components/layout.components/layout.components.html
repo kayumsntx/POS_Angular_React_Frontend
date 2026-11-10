@@ -9,28 +9,59 @@
     <div class="brand">
       <div class="brand-icon">💻</div>
       <div>
-        <div class="brand-name">TechPoint <span>POS</span></div>
+        <div class="brand-name">Tech Point</div>
         <div class="brand-sub">RETAIL MANAGEMENT</div>
       </div>
     </div>
 
-    <div class="nav-label">WORKSPACE</div>
+    <!-- WORKSPACE (Admin & Cashier) -->
+    @if (auth.hasRole(['Admin', 'Cashier'])) {
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="nav">
+        <a routerLink="/dashboard" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">📊</span>
+          <span>Dashboard</span>
+        </a>
+      </nav>
+    }
+
+    <div class="nav-label">YOUR ACCOUNT</div>
     <nav class="nav">
-      <a routerLink="/dashboard" routerLinkActive="active" (click)="closeSidebar()">
-        <span class="ico">📊</span>
-        <span>Dashboard</span>
+      <a routerLink="/home" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="ico">🏠</span>
+        <span>Home</span>
       </a>
 
-      <!-- Point of Sale (POS) -->
-      @if (auth.hasRole(['Admin', 'POSOperator', 'Cashier', 'Salesman'])) {
+      <a routerLink="/profile" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="ico">👤</span>
+        <span>Profile</span>
+      </a>
+
+      <a routerLink="/cart" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="ico">🛒</span>
+        <span>Cart</span>
+      </a>
+
+      <a routerLink="/my-orders" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="ico">📦</span>
+        <span>My Order</span>
+      </a>
+    </nav>
+
+    <!-- STORE MANAGEMENT (Admin & Cashier) -->
+    @if (auth.hasRole(['Admin', 'Cashier'])) {
+      <div class="nav-label">STORE MANAGEMENT</div>
+      <nav class="nav">
         <a routerLink="/pos" routerLinkActive="active" (click)="closeSidebar()">
           <span class="ico">🖥️</span>
           <span>Point of Sale</span>
-         
         </a>
-      }
 
-      @if (auth.hasRole(['Admin', 'POSOperator'])) {
+        <a routerLink="/returns" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">↩️</span>
+          <span>Order Returns</span>
+        </a>
+
         <a routerLink="/categories" routerLinkActive="active" (click)="closeSidebar()">
           <span class="ico">📁</span>
           <span>Categories</span>
@@ -40,20 +71,18 @@
           <span class="ico">📦</span>
           <span>Products Catalog</span>
         </a>
-      }
 
-      @if (auth.hasRole(['Admin', 'POSOperator', 'Cashier'])) {
         <a routerLink="/inventory" routerLinkActive="active" (click)="closeSidebar()">
           <span class="ico">📋</span>
           <span>Inventory & Stock</span>
         </a>
-      }
 
-      <a routerLink="/orders" routerLinkActive="active" (click)="closeSidebar()">
-        <span class="ico">🛒</span>
-        <span>Orders & Invoices</span>
-      </a>
-    </nav>
+        <a routerLink="/orders" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="ico">🛒</span>
+          <span>Orders & Invoices</span>
+        </a>
+      </nav>
+    }
 
     @if (auth.hasRole(['Admin'])) {
       <div class="nav-label">FINANCE & SYSTEM</div>
@@ -75,51 +104,72 @@
         <div class="dot-status active"></div>
         <div>
           <strong>System Live</strong>
-          <small>Role: {{ auth.role || 'User' }}</small>
+          <small>Role: {{ auth.role || 'Guest' }}</small>
         </div>
       </div>
 
       <div class="profile">
-        <div class="avatar">{{ getUserInitials() }}</div>
-        <div class="profile-info">
-          <strong [title]="auth.userName">{{ auth.userName || 'Admin' }}</strong>
-          <small>{{ auth.role || 'Staff' }}</small>
-        </div>
-        <button class="icon-btn-ghost" title="Logout" (click)="auth.logout()">🚪</button>
+        @if (auth.isLoggedIn()) {
+          <div class="avatar">{{ getUserInitials() }}</div>
+          <div class="profile-info">
+            <strong [title]="auth.userName">{{ auth.userName || 'User' }}</strong>
+            <small>{{ auth.role || 'User' }}</small>
+          </div>
+          <button class="icon-btn-ghost" title="Logout" (click)="auth.logout()">🚪</button>
+        } @else {
+          <div class="avatar">👤</div>
+          <div class="profile-info">
+            <strong>Welcome Guest</strong>
+            <small><a routerLink="/login" style="color: var(--primary); text-decoration: none; font-weight: 700;">Sign in →</a></small>
+          </div>
+        }
       </div>
     </div>
   </aside>
 
   <!-- MAIN WRAPPER -->
-  <main class="main">
-    <header class="topbar">
-      <div class="heading-wrap">
-        <button class="icon-btn mobile-menu-btn" (click)="toggleSidebar()" aria-label="Toggle Navigation">☰</button>
-        <div class="heading">
-          <h1>Omnichannel POS - Point of Sale</h1>
-          <p>Enterprise Shop & Retail Management</p>
-        </div>
-      </div>
-
-      <div class="top-actions">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input placeholder="Quick search..." />
+  <main class="main" [class.home-view]="isHomePage()">
+    @if (!isHomePage()) {
+      <header class="topbar">
+        <div class="heading-wrap">
+          <button class="icon-btn mobile-menu-btn" (click)="toggleSidebar()" aria-label="Toggle Navigation">☰</button>
+          <div class="heading">
+            <h1>Tech Point</h1>
+            <p>Enterprise Shop & Retail Management</p>
+          </div>
         </div>
 
-        <div class="api-status-pill">
-          <span class="pulse-dot"></span>
-          <span>Online</span>
-        </div>
+        @if (isPosPage()) {
+          <div class="top-actions">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input placeholder="Quick search..." />
+            </div>
 
-        <button class="primary-btn" routerLink="/pos">
-          <span>+</span> New Sale
+            <div class="api-status-pill">
+              <span class="pulse-dot"></span>
+              <span>Online</span>
+            </div>
+
+            @if (auth.hasRole(['Admin', 'Cashier'])) {
+              <button class="primary-btn" routerLink="/pos">
+                <span>+</span> New Sale
+              </button>
+            }
+          </div>
+        }
+      </header>
+    } @else {
+      <!-- Mobile hamburger toggle for Home page -->
+      <div class="home-mobile-toggle d-md-none">
+        <button class="icon-btn mobile-menu-btn d-inline-flex align-items-center gap-1" (click)="toggleSidebar()" aria-label="Toggle Navigation">
+          <span>☰</span> <span>Menu</span>
         </button>
       </div>
-    </header>
+    }
 
     <!-- VIEW CONTAINER -->
-    <div class="view-container">
+    <div class="view-container" [class.home-view-container]="isHomePage()">
       <router-outlet></router-outlet>
     </div>
   </main>

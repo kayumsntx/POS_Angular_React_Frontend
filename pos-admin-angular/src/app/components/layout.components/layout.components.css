@@ -213,6 +213,23 @@
   flex-direction: column;
 }
 
+.main.home-view {
+  padding: 0;
+  overflow-x: hidden;
+  background: #f8fafc;
+}
+
+.view-container.home-view-container {
+  width: 100%;
+  padding: 0;
+}
+
+.home-mobile-toggle {
+  padding: 12px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--line);
+}
+
 .topbar {
   display: flex;
   align-items: center;
