@@ -100,18 +100,32 @@
       </button>
     </div>
   </div>
-  <div class="card-body p-0">
+  
+
+  <div class="card-body p-0 table-responsive">
     <table class="table table-bordered mb-0">
       <thead>
-        <tr><th>#</th><th>Date</th><th>Type</th><th>Items</th><th>Payable</th><th>Payment</th><th>Status</th><th>Actions</th></tr>
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          <th>Type</th>
+          <!-- Fixed the Item column width directly -->
+          <th style="min-width: 200px; max-width: 350px;">Items</th>
+          <th>Payable</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
       </thead>
       <tbody>
         @for (o of orders(); track o.orderId) {
           <tr>
             <td>{{ o.orderId }}</td>
-            <td>{{ o.orderDate | date: 'yyyy-MM-dd HH:mm' }}</td>
+            <td>{{ o.orderDate + 'Z' | date: 'yyyy-MM-dd hh:mm a' }}</td>
+      
             <td>{{ o.orderType }}</td>
-            <td>
+            <!-- Applied fixed width, text-wrap, and text-break to force long item names to stay within bounds -->
+            <td class="text-wrap text-break" style="min-width: 200px; max-width: 350px;">
               <ul class="list-unstyled mb-0 small">
                 @for (it of o.items; track it.orderItemId) {
                   <li>{{ it.productName }} x {{ it.quantity }}</li>
@@ -125,14 +139,19 @@
             </td>
             <td><span [class]="'badge ' + statusClass(o.status)">{{ o.status }}</span></td>
             <td>
-              <button (click)="viewOrder(o.orderId)" type="button" class="btn btn-outline-primary btn-sm">Details</button>
-              @if (o.status === 'Pending' && o.orderType === 'Online' && auth.hasRole(['Admin', 'POSOperator', 'Salesman'])) {
-                <button (click)="approve(o.orderId)" type="button" class="btn btn-outline-success btn-sm">Approve</button>
-              }
-              @if (o.status === 'Pending' && auth.hasRole(['Admin'])) {
-                <button (click)="cancel(o.orderId)" type="button" class="btn btn-outline-danger btn-sm">Cancel</button>
-              }
-            </td>
+ 
+  <div class="d-flex flex-wrap gap-1">
+    <button (click)="viewOrder(o.orderId)" type="button" class="btn btn-outline-primary btn-sm">Details</button>
+    
+    @if (o.status === 'Pending' && o.orderType === 'Online' && auth.hasRole(['Admin', 'POSOperator', 'Salesman'])) {
+      <button (click)="approve(o.orderId)" type="button" class="btn btn-outline-success btn-sm">Approve</button>
+    }
+    
+    @if (o.status === 'Pending' && auth.hasRole(['Admin'])) {
+      <button (click)="cancel(o.orderId)" type="button" class="btn btn-outline-danger btn-sm">Cancel</button>
+    }
+  </div>
+</td>
           </tr>
         }
       </tbody>

@@ -1,5 +1,5 @@
 <div class="app-layout">
-  <!-- Mobile Backdrop -->
+ 
   @if (sidebarOpen) {
     <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
   }
@@ -115,7 +115,7 @@
             <strong [title]="auth.userName">{{ auth.userName || 'User' }}</strong>
             <small>{{ auth.role || 'User' }}</small>
           </div>
-          <button class="icon-btn-ghost" title="Logout" (click)="auth.logout()">🚪</button>
+          <button class="icon-btn-ghost" title="Logout" (click)="auth.logout()">⏻</button>
         } @else {
           <div class="avatar">👤</div>
           <div class="profile-info">

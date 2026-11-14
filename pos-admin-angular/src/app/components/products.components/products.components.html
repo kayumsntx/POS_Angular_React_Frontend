@@ -1,7 +1,8 @@
 <div class="row">
-  <div class="col-md-4 mb-4">
-    <div class="card">
-      <div class="card-header">
+  <!-- LEFT SIDE: Add/Edit Product Form -->
+  <div class="col-12 col-md-4 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header bg-light">
         <h5 class="mb-0">{{ isEditMode() ? 'Edit Product' : 'Add Product' }}</h5>
       </div>
       <div class="card-body">
@@ -44,50 +45,75 @@
             <label class="form-label">Image (max 2 MB)</label>
             <input (change)="onFileSelected($event)" class="form-control" type="file" accept="image/*" />
             @if (imagePreview()) {
-              <div class="mt-2">
-                <img [src]="imagePreview()" style="max-height: 100px" />
+              <div class="mt-2 text-center">
+                <img [src]="imagePreview()" class="rounded shadow-sm" style="max-height: 100px; object-fit: cover;" />
               </div>
             }
           </div>
           <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-outline-success">
+            <button type="submit" class="btn btn-outline-success w-50">
               {{ isEditMode() ? 'Update' : 'Save' }}
             </button>
-            <button type="button" class="btn btn-outline-danger" (click)="resetForm()">Cancel</button>
+            <button type="button" class="btn btn-outline-danger w-50" (click)="resetForm()">Cancel</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <div class="col-md-8 mb-4">
-    <div class="card">
-      <div class="card-header"><h4 class="mb-0">Product List</h4></div>
+  <!-- RIGHT SIDE: Product List Table -->
+  <div class="col-12 col-md-8 mb-4">
+    <div class="card shadow-sm w-100" style="overflow: hidden;">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Product List</h5>
+      </div>
       <div class="card-body p-0">
-        <table class="table table-bordered mb-0">
-          <thead>
-            <tr><th>Image</th><th>Product</th><th>Category</th><th>Cost / Price</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-            @for (p of products(); track p.productId) {
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered mb-0 align-middle">
+            <thead class="table-light">
               <tr>
-                <td>
-                  <img [src]="imageSrc(p)" style="width: 45px; height: 45px; object-fit: cover" />
-                </td>
-                <td>
-                  <strong>{{ p.productName }}</strong><br />
-                  <small class="text-muted">{{ p.barcode }}</small>
-                </td>
-                <td>{{ p.categoryName }}</td>
-                <td>{{ p.cost | number: '1.2-2' }} / {{ p.price | number: '1.2-2' }}</td>
-                <td>
-                  <button (click)="editProduct(p)" type="button" class="btn btn-outline-primary btn-sm">Edit</button>
-                  <button (click)="deleteProduct(p.productId)" type="button" class="btn btn-outline-danger btn-sm">Delete</button>
-                </td>
+                <th class="text-center">Image</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th class="text-nowrap">Cost / Price</th>
+                <!-- Sticky Actions Header -->
+                <th class="text-center" style="position: sticky; right: 0; z-index: 1; background-color: #f8f9fa;">Actions</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (p of products(); track p.productId) {
+                <tr>
+                  <td class="text-center">
+                    <img [src]="imageSrc(p)" class="rounded shadow-sm" style="width: 45px; height: 45px; object-fit: cover" />
+                  </td>
+                  <td>
+                    <!-- Ensure the product name has enough room but can wrap if very long -->
+                    <div style="min-width: 150px;">
+                      <strong class="text-break">{{ p.productName }}</strong><br />
+                      <small class="text-muted">{{ p.barcode }}</small>
+                    </div>
+                  </td>
+                  <td>{{ p.categoryName }}</td>
+                  <td class="text-nowrap">{{ p.cost | number: '1.2-2' }} / {{ p.price | number: '1.2-2' }}</td>
+                  
+                  <!-- Sticky Actions Column with white background -->
+                  <td class="text-nowrap text-center" style="position: sticky; right: 0; background-color: #fff; box-shadow: -2px 0 5px rgba(0,0,0,0.05);">
+                    <button (click)="editProduct(p)" type="button" class="btn btn-outline-primary btn-sm me-1">Edit</button>
+                    <button (click)="deleteProduct(p.productId)" type="button" class="btn btn-outline-danger btn-sm">Delete</button>
+                  </td>
+                </tr>
+              } @empty {
+                <!-- Empty state when no products exist -->
+                <tr>
+                  <td colspan="5" class="text-center py-5 text-muted">
+                    <div class="mb-2 fs-4">📦</div>
+                    No products found. Add your first product using the form.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

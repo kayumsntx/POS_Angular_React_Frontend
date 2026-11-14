@@ -1,5 +1,6 @@
 <div class="row">
-  <div class="col-md-4 mb-4">
+  <!-- LEFT SIDE: Add Category Form -->
+  <div class="col-12 col-md-4 mb-4">
     <div class="card">
       <div class="card-header">
         <h5 class="mb-0">{{ isEditMode() ? 'Edit Category' : 'Add Category' }}</h5>
@@ -28,28 +29,39 @@
     </div>
   </div>
 
-  <div class="col-md-8 mb-4">
-    <div class="card">
+  <!-- RIGHT SIDE: Category List Table -->
+  <div class="col-12 col-md-8 mb-4">
+    <div class="card w-100" style="overflow: hidden;">
       <div class="card-header"><h4 class="mb-0">Category List</h4></div>
       <div class="card-body p-0">
-        <table class="table table-bordered mb-0">
-          <thead>
-            <tr><th>#</th><th>Name</th><th>Description</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-            @for (c of categories(); track c.categoryId) {
+        <div class="table-responsive">
+          <table class="table table-bordered mb-0 text-nowrap">
+            <thead>
               <tr>
-                <td>{{ c.categoryId }}</td>
-                <td>{{ c.name }}</td>
-                <td>{{ c.description }}</td>
-                <td>
-                  <button (click)="editCategory(c)" type="button" class="btn btn-outline-primary btn-sm">Edit</button>
-                  <button (click)="deleteCategory(c.categoryId)" type="button" class="btn btn-outline-danger btn-sm">Delete</button>
-                </td>
+                <th>#</th>
+                <th>Name</th>
+                <th class="w-50 text-wrap">Description</th>
+                <th>Actions</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (c of categories(); track c.categoryId) {
+                <tr>
+                  <td>{{ c.categoryId }}</td>
+                  <td>{{ c.name }}</td>
+                  <!-- Force long text to break and wrap to the next line -->
+                  <td class="text-wrap text-break" style="min-width: 200px; max-width: 350px;">
+                    {{ c.description }}
+                  </td>
+                  <td>
+                    <button (click)="editCategory(c)" type="button" class="btn btn-outline-primary btn-sm me-1">Edit</button>
+                    <button (click)="deleteCategory(c.categoryId)" type="button" class="btn btn-outline-danger btn-sm">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
